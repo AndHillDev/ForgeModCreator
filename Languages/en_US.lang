@@ -23,6 +23,7 @@ mditabset.prev=Forward
 mditabset.next=Next
 mditabset.last=Last
 mditabset.tablist=Tablist
+tab.welcome=Welcome
 
 [SettingsForm]
 settings.caption=Settings
@@ -63,9 +64,10 @@ child.label.classes.recipes=Recipes
 child.label.classes.creativetab=Creative tab
 child.label.classes.language=Create a german language file
 child.toolbutton.create=Create workspace
-child.toolbutton.remove=Remove Workspace
-child.toolbutton.minecraft=Test the mod with Minecraft
-child.toolbutton.build=Create project
+child.toolbutton.remove=Remove workspace
+child.toolbutton.open=Open workspace 
+child.toolbutton.minecraft=Start Minecraft
+child.toolbutton.build=Build project
 child.listview.header.version=Version
 child.listview.header.mc=MC-Version
 child.listview.header.recommended=Recommended
@@ -115,6 +117,8 @@ createbuildgradle=Creating file build.gradle ...
 setupworkspace=Setup workspace ...
 startminecraft=Creating Mod and starting Minecraft ...
 createmod=Mod will be created ...
+cantcreateworkspace=You didn't entered all the necessary informations. The workspace can't be created.
+nohelpfile=There is no help file that can be shown here.
 
 [JavaForm]
 caption=Java Runtime Manager
@@ -137,3 +141,16 @@ listview.header.mcversion=Minecraft version
 listview.header.date=Date
 listview.header.recommended=Recommended
 listview.header.filename=Filename
+
+[InfoForm]
+caption=Program informations
+programmedby=Programmed and developed by
+allrights=All rights reserved
+usedlibs=This program is using libraries, which comes from other developers. The copyright for the following libraries is holding by these other developers. DelphiZip (DelZip64.dll and DelZip190.dll), Borland Memory Manager (borlndmm.dll) as well as SQLite3 Library (sqlite3.dll)
+button.close=Close
+
+[DefaultDialogs]
+workspace=Choose folder for your workspace
+logofile=Choose logo file in png format
+openproject=Open project
+saveproject=Save project as

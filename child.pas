@@ -90,6 +90,7 @@ type
     eraseWorkspace: TAdvToolBarButton;
     AdvToolBarSeparator1: TAdvToolBarSeparator;
     JvThread1: TJvThread;
+    openWorkspace: TAdvToolBarButton;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure modNameChange(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -112,6 +113,7 @@ type
     procedure modUrlChange(Sender: TObject);
     procedure modCreditsChange(Sender: TObject);
     procedure eraseWorkspaceClick(Sender: TObject);
+    procedure openWorkspaceClick(Sender: TObject);
   private
     { Private-Deklarationen }
   public
@@ -133,6 +135,7 @@ procedure SetDelay(const Milliseconds: DWord); StdCall; external 'Libraries\AHDL
 function IsExeRunning(const AExeName: string): boolean; StdCall; external 'Libraries\AHDLibrary.dll';
 function KillTask(ExeFileName: string): Integer; Stdcall; external 'Libraries\AHDLibrary.dll';
 function ReadFromIni(Filename, Section, Key: String): String; StdCall; external 'Libraries\AHDLibrary.dll';
+procedure ExecuteFile(Filename, Params, WorkDir: String); StdCall; external 'Libraries\AHDLibrary.dll';
 
 procedure TMDIChild.SetLanguage(langfile: String);
 var
@@ -164,6 +167,7 @@ begin
   deLang.Caption:=ReadFromIni(langfile,'ChildForm','child.label.classes.language');
   createWorkspace.Caption:=ReadFromIni(langfile,'ChildForm','child.toolbutton.create');
   eraseWorkspace.Caption:=ReadFromIni(langfile,'ChildForm','child.toolbutton.remove');
+  openWorkspace.Caption:=ReadFromIni(langfile,'ChildForm','child.toolbutton.open');
   startMinecraft.Caption:=ReadFromIni(langfile,'ChildForm','child.toolbutton.minecraft');
   buildProject.Caption:=ReadFromIni(langfile,'ChildForm','child.toolbutton.build');
   forgeVersion.Columns.Items[0].Caption:=ReadFromIni(langfile,'ChildForm','child.listview.header.version');
@@ -195,6 +199,8 @@ begin
   resourcesTab.Caption:=ReadFromIni(langfile,'ChildForm','child.tab.resources');
   sourcecodeTab.Caption:=ReadFromIni(langfile,'ChildForm','child.tab.source');
   consoleTab.Caption:=ReadFromIni(langfile,'ChildForm','child.tab.console');
+  workspacePath.DialogText:=ReadFromIni(mainFrm.langfile,'DefaultDialogs','workspace');
+  logoFile.DialogTitle:=ReadFromIni(mainFrm.langfile,'DefaultDialogs','logofile');
 end;
 
 procedure TMDIChild.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -243,7 +249,6 @@ begin
     ListItem.Caption:=MainFrm.Query.fieldByName('version').AsString;
     listItem.SubItems.Add(MainFrm.Query.fieldbyname('mcversion').AsString);
     ListItem.SubItems.Add(MainFrm.Query.fieldByName('recommended').AsString);
-    //forgeVersion.Items.Add(IntToSTr(MainFrm.Query.fieldbyname('id').AsInteger)+'|Version: '+MainFrm.Query.fieldbyname('version').AsString+' für Minecraft '+MainFrm.Query.fieldbyname('mcversion').AsString);
     MainFrm.Query.Next;
   end;
   MainFrm.Query.Close;
@@ -275,6 +280,8 @@ var
   renderer: TStringList;
   tab: TStringList;
   deutsch, englisch: String;
+begin
+if (workspacePath.Directory <> '') and (modName.Text <> '') and (modid.Text <> '') and(packageName.Text <> '') and (selectedForgeVersion.Caption <> '') then
 begin
   createWorkspace.Enabled:=false;
   eraseWorkspace.Enabled:=false;
@@ -619,6 +626,11 @@ begin
   mainFrm.StatusBar.Panels[6].Text:=mainFrm.GetMessageString('setupworkspace');
   command:=workspacePath.Text+'\\gradlew.bat setupDecompWorkspace --refresh-dependencies eclipse';
   Consoleio1.RunProcess(command,workspacePath.Directory,false);
+end
+else
+begin
+  MessageDlg(mainFrm.GetMessageString('cantcreateworkspace'),mtError,[mbOK],0);
+end;
 end;
 
 procedure TMDIChild.ConsoleIO1ReceiveOutput(Sender: TObject;
@@ -652,6 +664,7 @@ begin
     startMinecraft.Enabled:=true;
     buildProject.Enabled:=true;
     eraseWorkspace.Enabled:=true;
+    openWorkspace.Enabled:=true;
     forgeVersion.Enabled:=false;
     timer1.Enabled:=false;
     mainFrm.StatusBar.Panels[6].Text:='';
@@ -744,11 +757,16 @@ begin
           forgeVersion.Enabled:=true;
           eraseWorkspace.Enabled:=false;
           startMinecraft.Enabled:=false;
+          openWorkspace.Enabled:=false;
           buildProject.Enabled:=false;
           mcModInfoTab.TabVisible:=false;
           buildGradleTab.TabVisible:=false;
           resourcesTab.TabVisible:=false;
           sourcecodeTab.TabVisible:=false;
+          advmemo1.Lines.Clear;
+          advmemo2.Lines.Clear;
+          console.Lines.Clear;
+          AdvOfficePager1.ActivePage:=defaultsTab;
         end
         else
         begin
@@ -769,7 +787,16 @@ begin
         forgeVersion.Enabled:=true;
         eraseWorkspace.Enabled:=false;
         startMinecraft.Enabled:=false;
+        openWorkspace.Enabled:=false;
         buildProject.Enabled:=false;
+        mcModInfoTab.TabVisible:=false;
+        buildGradleTab.TabVisible:=false;
+        resourcesTab.TabVisible:=false;
+        sourcecodeTab.TabVisible:=false;
+        advmemo1.Lines.Clear;
+        advmemo2.Lines.Clear;
+        console.Lines.Clear;
+        AdvOfficePager1.ActivePage:=defaultsTab;
       end
       else
       begin
@@ -777,6 +804,11 @@ begin
       end;
     end;
   end;
+end;
+
+procedure TMDIChild.openWorkspaceClick(Sender: TObject);
+begin
+  ExecuteFile(workspacePath.Directory,'',workspacePath.Directory);
 end;
 
 end.

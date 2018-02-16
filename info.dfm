@@ -1,6 +1,6 @@
 object infoFrm: TinfoFrm
-  Left = 221
-  Top = 126
+  Left = 101
+  Top = 186
   BorderStyle = bsDialog
   Caption = 'Programminformationen'
   ClientHeight = 293

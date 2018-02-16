@@ -10,7 +10,7 @@ uses
   ExtCtrls, AdvNavBar, XPMan, ActnList, ExeInfo, uLkJSON, DB,
   ZAbstractRODataset, ZAbstractDataset, ZDataset, ZAbstractConnection,
   ZConnection,AdvStyleIF, WUpdateWiz, WUpdateLanguages, WUpdate, OleCtrls,
-  SHDocVw, AdvPanel;
+  SHDocVw, AdvPanel, AdvOfficePager, AdvOfficePagerStylers;
 
 type
   TStrArray = array of string;
@@ -117,10 +117,12 @@ type
     ul_german: TWebUpdateWizardGerman;
     AdvPopupMenu1: TAdvPopupMenu;
     Timer2: TTimer;
-    AdvPanel1: TAdvPanel;
-    WebBrowser1: TWebBrowser;
     AdvPanelStyler1: TAdvPanelStyler;
     ul_english: TWebUpdateWizardEnglish;
+    AdvOfficePager1: TAdvOfficePager;
+    tabWelcome: TAdvOfficePage;
+    WebBrowser1: TWebBrowser;
+    AdvOfficePagerOfficeStyler1: TAdvOfficePagerOfficeStyler;
     procedure FormCreate(Sender: TObject);
     procedure newProjectActionExecute(Sender: TObject);
     procedure saveProjectAsActionExecute(Sender: TObject);
@@ -356,6 +358,7 @@ begin
     child.resourcesTab.TabVisible:=true;
     child.sourcecodeTab.TabVisible:=true;
     child.startMinecraft.Enabled:=true;
+    child.openWorkspace.Enabled:=true;
     child.buildProject.Enabled:=true;
     child.AdvMemo1.Lines.LoadFromFile(child.workspacePath.Directory+'\src\main\resources\mcmod.info');
     child.AdvMemo2.Lines.LoadFromFile(child.workspacePath.Directory+'\build.gradle');
@@ -451,6 +454,10 @@ begin
   mainFrm.exitAction.Caption:=ReadFromIni(mainFrm.langfile,'MainForm','menu.project.exit');
   mainFrm.exitAction.Hint:=ReadFromIni(mainFrm.langfile,'MainForm','menu.project.exit');
 
+  // Update the tab control
+  mainFrm.tabWelcome.Caption:=ReadFromIni(mainFrm.langfile,'MainForm','tab.welcome');
+  mainFrm.AdvOfficePager1.ButtonSettings.CloseButtonHint:=ReadFromIni(mainFrm.langfile,'MainForm','mditabset.close');
+
   // Update the sub menu extras
   mainFrm.openEclipseAction.Caption:=ReadFromIni(mainFrm.langfile,'MainForm','menu.extras.eclipse');
   mainFrm.openEclipseAction.Hint:=ReadFromIni(mainFrm.langfile,'MainForm','menu.extras.eclipse');
@@ -526,6 +533,18 @@ begin
     WebUpdateWizard1.Language:=ul_german
   else
     WebUpdateWizard1.Language:=ul_english;
+
+  // Update the info dialog
+  infoFrm.Caption:=ReadFromIni(mainFrm.langfile,'InfoForm','caption');
+  infoFrm.Label2.Caption:=ReadFromIni(mainFrm.langfile,'InfoForm','programmedby')+' Andreas Hiller';
+  infoFrm.Label4.Caption:=ReadFromIni(mainFrm.langfile,'InfoForm','allrights');
+  infoFrm.Label7.Caption:=ReadFromIni(mainFrm.langfile,'InfoForm','usedlibs');
+  infoFrm.AdvGlowButton1.Caption:=ReadFromIni(mainFrm.langfile,'InfoForm','button.close');
+
+  // Update default dialogs
+  mainFrm.OpenDialog1.Title:=ReadFromIni(mainFrm.langfile,'DefaultDialogs','openproject');
+  mainFrm.SaveDialog1.Title:=ReadFromIni(mainFrm.langfile,'DefaultDialogs','saveproject');
+
 end;
 
 function TMainFrm.GetMessageString(Key: String): String;
@@ -684,7 +703,11 @@ end;
 
 procedure TmainFrm.helpTopicsActionExecute(Sender: TObject);
 begin
-  ExecuteFile(ExtractFilePath(application.ExeName)+'hilfe.chm','',ExtractFilePath(application.ExeName));  
+  {if language = 0 then
+    ExecuteFile(ExtractFilePath(application.ExeName)+'hilfe.chm','',ExtractFilePath(application.ExeName));
+  else
+    ExecuteFile(ExtractFilePath(application.ExeName)+'help.chm','',ExtractFilePath(application.ExeName)); }
+  MessageDlg(GetMessageString('nohelpfile'),mtInformation, [mbOK], 0);      
 end;
 
 procedure TmainFrm.homepageActionExecute(Sender: TObject);
@@ -728,11 +751,13 @@ procedure TmainFrm.Timer2Timer(Sender: TObject);
 begin
   if mainFrm.MDIChildCount >= 1 then
   begin
-    AdvPanel1.Visible:=false;
+    AdvOfficePager1.Visible:=false;
+    mdiTabset.Visible:=true;
   end
   else
   begin
-    AdvPanel1.Visible:=true;
+    AdvOfficePager1.Visible:=true;
+    mdiTabset.Visible:=false;
   end;
 end;
 

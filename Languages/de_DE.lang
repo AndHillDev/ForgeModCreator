@@ -23,6 +23,7 @@ mditabset.prev=Vorwärts
 mditabset.next=Weiter
 mditabset.last=Letzter
 mditabset.tablist=Tabliste
+tab.welcome=Willkommen
 
 [SettingsForm]
 settings.caption=Einstellungen
@@ -64,7 +65,8 @@ child.label.classes.creativetab=Creative Tab
 child.label.classes.language=Erstelle deutsche Sprachdatei
 child.toolbutton.create=Workspace erstellen
 child.toolbutton.remove=Workspace leeren
-child.toolbutton.minecraft=Mod in Minecraft testen
+child.toolbutton.open=Workspace öffnen
+child.toolbutton.minecraft=Minecraft starten
 child.toolbutton.build=Projekt erstellen
 child.listview.header.version=Version
 child.listview.header.mc=MC-Version
@@ -115,6 +117,8 @@ createbuildgradle=Datei build.gradle wird angepasst ...
 setupworkspace=Arbeitsplatz wird eingerichtet ...
 startminecraft=Mod wird erstellt und Minecraft gestartet ...
 createmod=Mod wird erstellt ...
+cantcreateworkspace=Sie haben nicht alle benötigten Informationen eingegeben. Der Workspace kann nicht erstellt werden.
+nohelpfile=Derzeit gibt es keine Hilfedatei die hier angezeigt werden könnte.
 
 [JavaForm]
 caption=Java Runtime Manager
@@ -138,3 +142,15 @@ listview.header.date=Datum
 listview.header.recommended=Empfohlen
 listview.header.filename=Dateiname
 
+[InfoForm]
+caption=Programminformationen
+programmedby=Programmiert und entwickelt von
+allrights=Alle Rechte vorbehalten
+usedlibs=Dieses Programm nutzt Bibliotheken, die von Drittanbietern stammen. Das Copyright für die folgenden Bibliotheken liegt bei dem jeweiligen Entwickler. DelphiZip (DelZip64.dll und DelZip190.dll), Borland Memory Manager (borlndmm.dll) sowie SQLite3 Library (sqlite3.dll)
+button.close=Schließen
+
+[DefaultDialogs]
+workspace=Speicherort für den Workspace wählen
+logofile=Logodatei im PNG-Format wählen
+openproject=Projekt öffnen
+saveproject=Projekt speichern unter
