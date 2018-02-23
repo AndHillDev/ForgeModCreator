@@ -297,6 +297,9 @@ begin
   projectObject.Add('Blocks',child.blocks.Checked);
   projectObject.Add('CreativeTab',{true}child.creativeTab.Checked);
   projectObject.Add('Recipes',child.recipes.Checked);
+  projectObject.Add('GUIHandler',child.GUIHandler.Checked);
+  projectObject.Add('ConfigHandler',child.ConfigHandler.Checked);
+  projectObject.Add('EventHandler',child.EventListener.Checked);
   projectObject.Add('DeutschLanguage',child.deLang.Checked);
 
   rootObject.Add('ProjectData',projectObject);
@@ -346,6 +349,18 @@ begin
   child.blocks.Checked:=projectObject.getBoolean('Blocks');
   child.creativeTab.Checked:={true;}projectObject.getBoolean('CreativeTab');
   child.recipes.Checked:=projectObject.getBoolean('Recipes');
+  child.GUIHandler.Checked:=projectObject.getBoolean('GUIHandler');
+  if maiNFrm.GetMinecraftMiner(child.forgeVersion.Selected.SubItems[0]) < 11 then
+  begin
+    child.ConfigHandler.Checked:=projectObject.getBoolean('ConfigHandler');
+    child.ConfigHandler.Enabled:=true;
+  end
+  else
+  begin
+    child.ConfigHandler.Checked:=false;
+    child.ConfigHandler.Enabled:=false;
+  end;
+  child.EventListener.Checked:=projectObject.getBoolean('EventHandler');
   child.deLang.Checked:=projectObject.getBoolean('DeutschLanguage');
   input.Free;
   if fileexists(child.workspacePath.Directory+'\.classpath') then

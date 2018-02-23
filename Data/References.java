@@ -8,4 +8,7 @@ public class References {
 	
 	public static final String CLIENT_PROXY = "[PackageName].proxies.ClientProxy";
 	public static final String SERVER_PROXY = "[PackageName].proxies.ServerProxy";
+	
+[OtherVariables]
+
 }

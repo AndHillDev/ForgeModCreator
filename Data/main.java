@@ -7,6 +7,9 @@ import [PackageName].proxies.CommonProxy;
 [RecipePackage]
 [TabPackage]
 [CreativeTab]
+[GUIHandler]
+[ConfigHandler]
+[EventListener]
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -14,8 +17,11 @@ import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+[NetworkRegistry]
+[Configuration]
+[MinecraftForge]
 
-@Mod(modid=References.MODID, name=References.MODNAME, version=References.MODVERSION, acceptedMinecraftVersions=References.MCVERSIONS)
+@Mod(modid=References.MODID, name=References.MODNAME, version=References.MODVERSION, acceptedMinecraftVersions=References.MCVERSIONS[GuiFactory])
 public class [MainClass] {
 	
 	@Instance
@@ -25,6 +31,8 @@ public class [MainClass] {
 	public static CommonProxy proxy;
 	
 [Tab]
+
+[Config]
 	
 	@EventHandler
 	public void preInit(FMLPreInitializationEvent event) {

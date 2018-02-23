@@ -91,6 +91,11 @@ type
     AdvToolBarSeparator1: TAdvToolBarSeparator;
     JvThread1: TJvThread;
     openWorkspace: TAdvToolBarButton;
+    GUIHandler: TCheckBox;
+    ConfigHandler: TCheckBox;
+    EventListener: TCheckBox;
+    AdvToolBarButton3: TAdvToolBarButton;
+    Timer2: TTimer;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure modNameChange(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -164,6 +169,8 @@ begin
   blocks.Caption:=ReadFromIni(langfile,'ChildForm','child.label.classes.blocks');
   recipes.Caption:=ReadFromIni(langfile,'ChildForm','child.label.classes.recipes');
   creativeTab.Caption:=ReadFromIni(langfile,'ChildForm','child.label.classes.creativetab');
+  GUIHandler.Caption:=ReadFromIni(langfile,'ChildForm','child.label.classes.guihandler');
+  ConfigHandler.Caption:=ReadFromIni(langfile,'ChildForm','child.label.classes.confighandler');
   deLang.Caption:=ReadFromIni(langfile,'ChildForm','child.label.classes.language');
   createWorkspace.Caption:=ReadFromIni(langfile,'ChildForm','child.toolbutton.create');
   eraseWorkspace.Caption:=ReadFromIni(langfile,'ChildForm','child.toolbutton.remove');
@@ -279,10 +286,12 @@ var
   init: TStringList;
   renderer: TStringList;
   tab: TStringList;
+  otherVariables: TStringList;
   deutsch, englisch: String;
 begin
 if (workspacePath.Directory <> '') and (modName.Text <> '') and (modid.Text <> '') and(packageName.Text <> '') and (selectedForgeVersion.Caption <> '') then
 begin
+  Console.Lines.Clear;
   createWorkspace.Enabled:=false;
   eraseWorkspace.Enabled:=false;
   AdvOfficePager1.ActivePage:=consoleTab;
@@ -336,8 +345,9 @@ begin
     ForceDirectories(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\blocks');
   end;
   SetDelay(Random(500));
+
   // Package Handlers wird erstellt
-  if recipes.Checked then
+  if (recipes.Checked) or (GUIHandler.Checked) or (ConfigHandler.Checked) or (EventListener.Checked) then
   begin
     Console.Lines.Add(mainFrm.GetMessageString('createhandlerpackage'));
     ForceDirectories(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\handlers');
@@ -367,13 +377,32 @@ begin
     end;
   end;
   SetDelay(Random(500));
+
   // Erstelle Sprachverzeichnis
   Console.Lines.Add(mainFrm.GetMessageString('createlanguagepackage'));
   ForceDirectories(workspacePath.Directory+'\src\main\resources\assets\'+modID.Text+'\lang');
   SetDelay(Random(500));
+
+   // Erstelle Verzeichnisse für Guis und container
+  if GUIHandler.Checked then
+  begin
+    Console.Lines.Add(mainFrm.GetMessageString('createguihandler'));
+    ForceDirectories(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\gui');
+    ForceDirectories(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\container');
+    ForceDirectories(workspacePath.Directory+'\src\main\resources\assets\'+modID.Text+'\textures\gui\container');
+  end;
+
+  // Erstelle Verzeichnis für Guis for the Ingame Gui
+  if (ConfigHandler.Checked) and (GUIHandler.Checked = false) then
+  begin
+    Console.Lines.Add(mainFrm.GetMessageString('createguihandler'));
+    ForceDirectories(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\gui');
+  end;
+
   Console.Lines.Add(mainFrm.GetMessageString('createmainclass'));
   mainClassFile:=Trim(StringReplace(modName.Text,' ','',[rfReplaceAll]));
   SetDelay(Random(500));
+
   // Hauptklasse wird erstellt
   klasse:=TStringList.Create;
   if mainFrm.GetMinecraftMiner(forgeVersion.Selected.SubItems[0]) = 7 then
@@ -396,7 +425,7 @@ begin
     klasse.Delete(klasse.IndexOf('[RecipePackage]'));
 
   if creativeTab.Checked then
-    Klasse.Text:=StringReplace(Klasse.Text,'[TabPackage]','import de.andhilldev.tutorialmod.misc.Tab;',[rfReplaceAll])
+    Klasse.Text:=StringReplace(Klasse.Text,'[TabPackage]','import '+packageName.Text+'.misc.Tab;',[rfReplaceAll])
   else
     klasse.Delete(klasse.IndexOf('[TabPackage]'));
 
@@ -409,12 +438,65 @@ begin
     Klasse.Text:=StringReplace(Klasse.Text,'[Tab]',#9+'public static CreativeTabs tab = new Tab(CreativeTabs.getNextID(),"Tab");',[rfReplaceAll])
   else
     klasse.Delete(klasse.IndexOf('[Tab]'));
-    //klasse.Text:=StringReplace(Klasse.Text,'[Tab]','',[rfReplaceAll]);
 
+  if GUIHandler.Checked then
+    Klasse.Text:=StringReplace(Klasse.Text,'[GUIHandler]','import '+packageName.Text+'.handlers.GuiHandler;',[rfReplaceAll])
+  else
+    klasse.Delete(klasse.IndexOf('[GUIHandler]'));
 
-  if (items.Checked) or (blocks.Checked) then
+  if GUIHandler.Checked then
+    if mainFrm.GetMinecraftMiner(forgeVersion.Selected.SubItems[0]) = 7 then
+      Klasse.Text:=StringReplace(Klasse.Text,'[NetworkRegistry]','import cpw.mods.fml.common.network.NetworkRegistry;',[rfReplaceAll])
+    else
+      Klasse.Text:=StringReplace(Klasse.Text,'[NetworkRegistry]','import net.minecraftforge.fml.common.network.NetworkRegistry;',[rfReplaceAll])
+  else
+    klasse.Delete(klasse.IndexOf('[NetworkRegistry]'));
+
+  // Configuration handler ----------------------------------------------------
+
+  if ConfigHandler.Checked then
+    Klasse.Text:=StringReplace(Klasse.Text,'[ConfigHandler]','import '+packageName.Text+'.handlers.ConfigurationHandler;',[rfReplaceAll])
+  else
+    klasse.Delete(klasse.IndexOf('[ConfigHandler]'));
+
+  if ConfigHandler.Checked then
+    Klasse.Text:=StringReplace(Klasse.Text,'[Configuration]','import net.minecraftforge.common.config.Configuration;',[rfReplaceAll])
+  else
+    Klasse.Delete(klasse.IndexOf('[Configuration]'));
+
+  if ConfigHandler.Checked then
+    Klasse.Text:=StringReplace(Klasse.Text,'[GuiFactory]',', guiFactory=References.INGAMECONFIGGUI',[rfReplaceAll])
+  else
+    Klasse.Text:=StringReplace(Klasse.Text,'[GuiFactory]','',[rfReplaceAll]);
+
+  if ConfigHandler.Checked then
+    Klasse.Text:=StringReplace(Klasse.Text,'[Config]',#9+'public static Configuration config;',[rfReplaceAll])
+  else
+    Klasse.Delete(klasse.IndexOf('[Config]'));
+
+  if EventListener.Checked then
+    Klasse.Text:=StringReplace(Klasse.Text,'[EventListener]','import '+packageName.Text+'.handlers.EventListener;',[rfReplaceAll])
+  else
+    Klasse.Delete(Klasse.IndexOf('[EventHandler]'));
+
+  if (EventListener.Checked) or (ConfigHandler.Checked) then
+    Klasse.Text:=StringReplace(Klasse.Text,'[MinecraftForge]','import net.minecraftforge.common.MinecraftForge;',[rfReplaceAll])
+  else
+    Klasse.Delete(Klasse.IndexOf('[MinecraftForge]'));
+
+  // ---------------------------------------------------------------------------
+
+  // Creating PreInit part -----------------------------------------------------
+
+  if (items.Checked) or (blocks.Checked) or (ConfigHandler.Checked)then
   begin
     preInit:=TStringList.Create;
+    if ConfigHandler.Checked then
+    begin
+      preInit.Add(#9+#9+'ConfigurationHandler.init(event.getSuggestedConfigurationFile());');
+      preInit.Add(#9+#9+'ConfigurationHandler configListener = new ConfigurationHandler();');
+      preInit.Add(#9+#9+'MinecraftForge.EVENT_BUS.register(configListener);');
+    end;
     if items.Checked then preInit.Add(#9+#9+'ModItems.init();');
     if blocks.Checked then preInit.Add(#9+#9+'ModBlocks.init();');
     klasse.Text:=StringReplace(klasse.Text,'[PreInit]',preInit.Text,[rfReplaceAll]);
@@ -425,12 +507,22 @@ begin
   end;
   preInit.Free;
 
-  if (items.Checked) or (blocks.Checked) or (recipes.Checked) then
+  // --------------------------------------------------------------------------
+
+  // Creating Init Part -------------------------------------------------------
+
+  if (items.Checked) or (blocks.Checked) or (recipes.Checked) or (GUIHandler.Checked) then
   begin
     init:=TStringList.Create;
     if items.Checked then init.Add(#9+#9+'ModItems.register();');
     if blocks.Checked then init.Add(#9+#9+'ModBlocks.register();');
     if recipes.Checked then init.Add(#9+#9+'RecipeHandler.registerRecipes();');
+    if GUIHandler.Checked then init.Add(#9+#9+'NetworkRegistry.INSTANCE.registerGuiHandler(instance, new GuiHandler());');
+    if EventListener.Checked then
+    begin
+      init.Add(#9+#9+'EventListener eventListener = new EventListener();');
+      init.Add(#9+#9+'MinecraftForge.EVENT_BUS.register(eventListener);')
+    end;
     klasse.Text:=StringReplace(klasse.Text,'[Init]',init.Text,[rfReplaceAll]);
   end
   else
@@ -439,9 +531,17 @@ begin
   end;
   init.Free;
 
+  // --------------------------------------------------------------------------
+
+  // Save main class ----------------------------------------------------------
+
   klasse.SaveToFile(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\'+mainClassFile+'.java');
   SetDelay(Random(500));
-  // Klasse References.java wird erstellt
+
+  // --------------------------------------------------------------------------
+
+  // Klasse References.java wird erstellt -------------------------------------
+
   Console.Lines.Add(mainFrm.GetMessageString('createreferencesclass'));
   Klasse.Clear;
   Klasse.LoadFromFile(ExtractFilePath(application.ExeName)+'Data\References.java');
@@ -450,16 +550,36 @@ begin
   Klasse.Text:=StringReplace(Klasse.Text,'[ModName]',modName.Text,[rfReplaceAll]);
   Klasse.Text:=StringReplace(Klasse.Text,'[ModVersion]',modVersion,[rfReplaceAll]);
   Klasse.Text:=StringReplace(Klasse.Text,'[MCVersions]','['+forgeversion.Selected.SubItems[0]+']',[rfReplaceAll]);
+
+  if ConfigHandler.Checked then
+  begin
+    otherVariables:=TStringList.Create;
+    if ConfigHandler.Checked then otherVariables.Add(#9+'public static final String INGAMECONFIGGUI = "'+packageName.Text+'.gui.InGameConfigGui";');
+    Klasse.Text:=StringReplace(Klasse.Text,'[OtherVariables]',otherVariables.Text,[rfReplaceAll]);
+  end
+  else
+  begin
+    Klasse.Delete(Klasse.IndexOf('[OtherVariables]'));
+  end;
+
   Klasse.SaveToFile(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\misc\References.java');
   SetDelay(Random(500));
-  // Interface CommonProxy wird erstellt
+
+  // --------------------------------------------------------------------------
+
+  // Interface CommonProxy wird erstellt --------------------------------------
+
   Console.Lines.Add(mainFrm.GetMessageString('createcommonproxyinterface'));
   Klasse.Clear;
   Klasse.LoadFromFile(ExtractFilePath(application.ExeName)+'Data\CommonProxy.java');
   Klasse.Text:=StringReplace(Klasse.Text,'[PackageName]',packageName.Text,[rfReplaceAll]);
   Klasse.SaveToFile(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\proxies\CommonProxy.java');
   SetDelay(Random(500));
-  // Klasse ClientProxy wird erstellt
+
+  // --------------------------------------------------------------------------
+
+  // Klasse ClientProxy wird erstellt -----------------------------------------
+
   Console.Lines.Add(mainFrm.GetMessageString('createclientproxyclass'));
   Klasse.Clear;
   Klasse.LoadFromFile(ExtractFilePath(application.ExeName)+'Data\ClientProxy.java');
@@ -490,7 +610,11 @@ begin
   end;
   Klasse.SaveToFile(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\proxies\ClientProxy.java');
   SetDelay(Random(500));
-  // Klasse ServerProxy wird erstellt
+
+  // --------------------------------------------------------------------------
+
+  // Klasse ServerProxy wird erstellt -----------------------------------------
+
   Console.Lines.Add(mainFrm.GetMessageString('createserverproxyclass'));
   Klasse.Clear;
   Klasse.LoadFromFile(ExtractFilePath(application.ExeName)+'Data\ServerProxy.java');
@@ -498,6 +622,7 @@ begin
   Klasse.SaveToFile(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\proxies\ServerProxy.java');
   SetDelay(Random(500));
 
+  // --------------------------------------------------------------------------
 
   // Klasse Items wird erstellt (Optional)
   Klasse.Clear;
@@ -520,6 +645,7 @@ begin
     Klasse.SaveToFile(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\init\ModItems.java');
   end;
   SetDelay(Random(500));
+
   // Klasse Blocks wird erstellt (Optional)
   Klasse.Clear;
   if blocks.Checked then
@@ -541,6 +667,7 @@ begin
     Klasse.SaveToFile(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\init\ModBlocks.java');
   end;
   SetDelay(Random(500));
+
   // Klasse RecipeHandler.java wird erstellt
   if recipes.Checked then
   begin
@@ -551,6 +678,7 @@ begin
     Klasse.SaveToFile(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\handlers\RecipeHandler.java');
   end;
   SetDelay(Random(500));
+
   // Klasse Tab.java wird erstellt
   if creativeTab.Checked then
   begin
@@ -566,6 +694,89 @@ begin
     Klasse.SaveToFile(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\misc\Tab.java');
   end;
   SetDelay(Random(500));
+
+  // Erstellen des GUI-Handlers
+  if GUIHandler.Checked then
+  begin
+    Console.Lines.Add(maiNFrm.GetMessageString('createguihandlerclass'));
+    Klasse.Clear;
+    if mainFrm.GetMinecraftMiner(forgeVersion.Selected.SubItems[0]) = 7 then
+      Klasse.LoadFromFile(ExtractFilePath(application.ExeName)+'\Data\GuiHandler17.java')
+    else
+      Klasse.LoadFromFile(ExtractFilePath(application.ExeName)+'\Data\GuiHandler18.java');
+    Klasse.Text:=StringReplace(Klasse.Text,'[PackageName]',packageName.Text,[rfReplaceAll]);
+    Klasse.Text:=StringReplace(Klasse.Text,'[MainClass]',modName.Text,[rfReplaceAll]);
+    Klasse.SaveToFile(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\handlers\GuiHandler.java');
+  end;
+  SetDelay(Random(500));
+
+  // Erstellen der Klasse ConfigurationHandler.java ---------------------------
+
+  if ConfigHandler.Checked then
+  begin
+    Console.Lines.Add(mainFrm.GetMessageString('createconfighandler'));
+    Klasse.Clear;
+    if mainFrm.GetMinecraftMiner(forgeVersion.Selected.SubItems[0]) = 7 then
+      Klasse.LoadFromFile(ExtractFilePath(application.ExeName)+'\Data\ConfigurationHandler17.java')
+    else if mainFrm.GetMinecraftMiner(forgeVersion.Selected.SubItems[0]) = 8 then
+      Klasse.LoadFromFile(ExtractFilePath(application.ExeName)+'\Data\ConfigurationHandler18.java')
+    else
+      Klasse.LoadFromFile(ExtractFilePath(application.ExeName)+'\Data\ConfigurationHandler19.java');
+    Klasse.Text:=StringReplace(Klasse.Text,'[PackageName]',packageName.Text,[rfReplaceAll]);
+    Klasse.SaveToFile(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\handlers\ConfigurationHandler.java');
+  end;
+  SetDelay(Random(500));
+
+  // --------------------------------------------------------------------------
+
+  // Erstellen der Klasse InGameConfigGui.java
+
+  if (ConfigHandler.Checked) and (mainFrm.GetMinecraftMiner(forgeVersion.Selected.SubItems[0]) < 11) then
+  begin
+    Console.Lines.Add(mainFrm.GetMessageString('createingameconfiggui'));
+    Klasse.Clear;
+    if mainFrm.GetMinecraftMiner(forgeVersion.Selected.SubItems[0]) = 7 then
+      Klasse.LoadFromFile(ExtractFilePath(application.ExeName)+'\Data\InGameConfigGui17.java')
+    else
+      Klasse.LoadFromFile(ExtractFilePath(application.ExeName)+'\Data\InGameConfigGui18.java');
+    Klasse.Text:=StringReplace(Klasse.Text,'[PackageName]',packageName.Text,[rfReplaceAll]);
+    Klasse.SaveToFile(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\gui\InGameConfigGui.java');
+  end;
+  SetDelay(Random(500));
+
+  // --------------------------------------------------------------------------
+
+  // Erstellen der Klasse GuiInGameConfig.java --------------------------------
+
+  if (ConfigHandler.Checked) and (mainFrm.GetMinecraftMiner(forgeVersion.Selected.SubItems[0]) < 11) then
+  begin
+    Console.Lines.Add(mainFrm.GetMessageString('createguiingameconfig'));
+    Klasse.Clear;
+    if mainFrm.GetMinecraftMiner(forgeVersion.Selected.SubItems[0]) = 7 then
+      Klasse.LoadFromFile(ExtractFilePath(application.ExeName)+'\Data\GuiInGameConfig17.java')
+    else
+      Klasse.LoadFromFile(ExtractFilePath(application.ExeName)+'\Data\GuiInGameConfig18.java');
+    Klasse.Text:=StringReplace(Klasse.Text,'[PackageName]',packageName.Text,[rfReplaceAll]);
+    Klasse.SaveToFile(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\misc\GuiInGameConfig.java');
+  end;
+  SetDelay(Random(500));
+
+  // --------------------------------------------------------------------------
+
+  // Erstellen der Klasse EventListener.java ----------------------------------
+
+  if EventListener.Checked then
+  begin
+    console.Lines.Add(mainFrm.GetMessageString('createeventlistener'));
+    Klasse.Clear;
+    Klasse.LoadFromFile(ExtractFilePath(application.ExeName)+'Data\EventListener.java');
+    Klasse.Text:=StringReplace(Klasse.Text,'[PackageName]',packageName.Text,[rfReplaceAll]);
+    klasse.SaveToFile(workspacePath.Directory+'\src\main\java\'+maiNFrm.ConvertPackageName(packageName.Text)+'\handlers\EventListener.java');
+  end;
+  SetDelay(500);
+
+  // --------------------------------------------------------------------------
+
   //Erstellen der Sprachdateien
   Klasse.Clear;
   Console.Lines.Add(mainFrm.GetMessageString('createlanguagefiles'));
@@ -585,6 +796,7 @@ begin
     Klasse.SaveToFile(workspacePath.Directory+'\src\main\resources\assets\'+modID.Text+'\lang\'+deutsch);
   Klasse.Free;
   SetDelay(Random(500));
+
   // Logofile wird kopiert (Optional)
   if fileexists(logoFile.FileName) then
   begin
@@ -674,7 +886,15 @@ end;
 procedure TMDIChild.forgeVersionSelectItem(Sender: TObject;
   Item: TListItem; Selected: Boolean);
 begin
-  selectedForgeVersion.Caption:=item.Caption;
+  {if mainFrm.GetMinecraftMiner(Item.SubItems[0]) > 10 then
+  begin
+    ConfigHandler.Enabled:=false;
+  end
+  else
+  begin
+    ConfigHandler.Enabled:=true;
+  end;      }
+  selectedForgeVersion.Caption:=item.Caption; 
   modified.Caption:='1';
 end;
 
@@ -766,7 +986,7 @@ begin
           advmemo1.Lines.Clear;
           advmemo2.Lines.Clear;
           console.Lines.Clear;
-          AdvOfficePager1.ActivePage:=defaultsTab;
+          AdvOfficePager1.ActivePageIndex:=0;
         end
         else
         begin
@@ -796,7 +1016,7 @@ begin
         advmemo1.Lines.Clear;
         advmemo2.Lines.Clear;
         console.Lines.Clear;
-        AdvOfficePager1.ActivePage:=defaultsTab;
+        AdvOfficePager1.ActivePageIndex:=0;
       end
       else
       begin
